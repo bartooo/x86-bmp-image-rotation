@@ -204,9 +204,9 @@ int main(int argc, char* argv[])
 {
 	imgInfo* pInfo;
 	
-	pInfo = readBMP("kitty.bmp");
+	pInfo = readBMP("kitty.bmp");	//  Set name of source file
     unsigned char* memoryOut = allocateMem(pInfo);
     rotate(pInfo, memoryOut);
-    saveBMP(pInfo, "out.bmp", memoryOut);
+    saveBMP(pInfo, "out.bmp", memoryOut);	// Set name of destination file
 	return 0;
 }
