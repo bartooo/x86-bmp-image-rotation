@@ -1,37 +1,39 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 
 extern void copyLines(unsigned char* copywritePtr, unsigned char* readPtr, int rem, int imageHeight, int lineBytes);
 
+#pragma pack(push, 1)
 typedef struct
 {
-	unsigned short bfType; 
-	unsigned long  bfSize; 		// size of file in bytes
-	unsigned short bfReserved1; 
-	unsigned short bfReserved2; 
-	unsigned long  bfOffBits; 	// offset in bytes from header to pixels
-	unsigned long  biSize; 		// specifies the number of bytes required by the struct
-	long  biWidth; 				// width in pixels
-	long  biHeight; 			// height in pixels
-	short biPlanes; 
-	short biBitCount; 
-	unsigned long  biCompression; 
-	unsigned long  biSizeImage; // size of file in bytes
-	long biXPelsPerMeter; 
-	long biYPelsPerMeter; 
-	unsigned long  biClrUsed; 
-	unsigned long  biClrImportant;
-	unsigned long  RGBQuad_0;
-	unsigned long  RGBQuad_1;
+	uint16_t bfType; 
+	uint32_t  bfSize; 
+	uint16_t bfReserved1; 
+	uint16_t bfReserved2; 
+	uint32_t  bfOffBits; 
+	uint32_t  biSize; 
+	int32_t  biWidth; 
+	int32_t  biHeight; 
+	int16_t biPlanes; 
+	int16_t biBitCount; 
+	uint32_t  biCompression; 
+	uint32_t  biSizeImage; 
+	int32_t biXPelsPerMeter; 
+	int32_t biYPelsPerMeter; 
+	uint32_t  biClrUsed; 
+	uint32_t  biClrImportant;
+	uint32_t  RGBQuad_0;
+	uint32_t  RGBQuad_1;
 } bmpHdr;
+#pragma pack(pop)
 
-typedef struct
+typedef struct 
 {
-	int width, height;		// width and height of image
-	unsigned char* pImg;	// pointer to top left corner
-	int cX, cY;				// current coordinates
-	int col;				// current color
+	unsigned char *pImg;
+	int width;
+	int height;
 } imgInfo;
 
 void* freeResources(FILE* pFile, void* pFirst, void* pSnd)
@@ -55,35 +57,32 @@ imgInfo* readBMP(const char* fname)
 	unsigned char* ptr;
 
 	pInfo = 0;
-	// open file in read binary mode
 	fbmp = fopen(fname, "rb");
 	if (fbmp == 0)
     {
         printf("error in opening file\n");
         return 0;
     }
-    
-	// read the bitmap file header
+
 	fread((void *) &bmpHead, sizeof(bmpHead), 1, fbmp);
 	// some basic checks
 	if (bmpHead.bfType != 0x4D42 || bmpHead.biPlanes != 1 ||
 		bmpHead.biBitCount != 1 ||
 		(pInfo = (imgInfo *) malloc(sizeof(imgInfo))) == 0)
-        {
+		{
             printf("error in basic checks\n");
 		    return (imgInfo*) freeResources(fbmp, pInfo->pImg, pInfo);
         }
-    
+
 	pInfo->width = bmpHead.biWidth;
 	pInfo->height = bmpHead.biHeight;
 	imageSize = (((pInfo->width + 31) >> 5) << 2) * pInfo->height;
 
 	if ((pInfo->pImg = (unsigned char*) malloc(imageSize)) == 0)
-    {
+	{
         printf("error in allocation\n");
 		return (imgInfo*) freeResources(fbmp, pInfo->pImg, pInfo);
     }
-
 	// process height (it can be negative)
 	ptr = pInfo->pImg;
 	lineBytes = ((pInfo->width + 31) >> 5) << 2; // line size in bytes
@@ -99,12 +98,12 @@ imgInfo* readBMP(const char* fname)
 	// reading image
 	// moving to the proper position in the file
 	if (fseek(fbmp, bmpHead.bfOffBits, SEEK_SET) != 0)
-    {
+	{
         printf("error in moving to the beggining of data\n");
 		return (imgInfo*) freeResources(fbmp, pInfo->pImg, pInfo);
     }
 
-	for (y=0; y < pInfo->height; ++y)
+	for (y=0; y<pInfo->height; ++y)
 	{
 		fread(ptr, 1, abs(lineBytes), fbmp);
 		ptr += lineBytes;
@@ -150,7 +149,7 @@ void rotate(const imgInfo* pInfo, unsigned char *writePtr)
 
 int saveBMP(const imgInfo* pInfo, const char* fname, unsigned char *writePtr)
 {
-	int lineBytes = ((pInfo->width + 31) >> 5) << 2;
+	int lineBytes = ((pInfo->width + 31) >> 5)<<2;
     int colBytes = ((pInfo->height + 31) >> 5) << 2;
 	bmpHdr bmpHead = 
 	{
@@ -164,7 +163,7 @@ int saveBMP(const imgInfo* pInfo, const char* fname, unsigned char *writePtr)
 	1,					// short biPlanes; 
 	1,					// short biBitCount; 
 	0,					// unsigned long  biCompression; 
-	colBytes* pInfo->width,	// unsigned long  biSizeImage; 
+	colBytes* pInfo->width,		// unsigned long  biSizeImage; 
 	11811,				// long biXPelsPerMeter; = 300 dpi
 	11811,				// long biYPelsPerMeter; 
 	2,					// unsigned long  biClrUsed; 
@@ -178,7 +177,7 @@ int saveBMP(const imgInfo* pInfo, const char* fname, unsigned char *writePtr)
 	int y;
 
 	if ((fbmp = fopen(fname, "wb")) == 0)
-    {
+	{
         printf("error in opening file");
 		return -1;
     }
@@ -189,7 +188,7 @@ int saveBMP(const imgInfo* pInfo, const char* fname, unsigned char *writePtr)
 		return -2;
 	}
 
-    ptr = writePtr + colBytes * (pInfo->width - 1);
+	ptr = writePtr + colBytes * (pInfo->width - 1);
 	for (y = (pInfo->width); y > 0; --y, ptr -= colBytes)
 		if (fwrite(ptr, sizeof(unsigned char), colBytes, fbmp) != colBytes)
 		{

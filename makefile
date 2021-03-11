@@ -3,12 +3,11 @@ ASMBIN=nasm
 
 all : asm cc link
 asm : 
-	$(ASMBIN) -o copyLines.o -f elf -l copyLines.lst copyLines.asm
+	$(ASMBIN) -o copyLines64.o -f elf64 copyLines64.asm
 cc :
-	$(CC) -m32 -c -fpack-struct -g -O0 rotation.c
+	$(CC) -c -g -O0 rotation64.c
 link :
-	$(CC) -m32 -o rotation rotation.o copyLines.o
+	$(CC) -o rotation64 rotation64.o copyLines64.o
 clean :
 	rm *.o
-	rm rotation
-	rm copyLines.lst
+	rm rotation64
